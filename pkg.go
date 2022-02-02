@@ -69,7 +69,6 @@ func (d *Dialer) DialContext(ctx context.Context, network, addr string) (net.Con
 		if d.Block != nil && d.Block(ip) {
 			continue
 		}
-		// TODO: split timeout evenly among attempts, similar to how net.Dialer.DialContext does it
 		conn, err := d.Dialer.DialContext(ctx, tcpNetwork, net.JoinHostPort(ip.String(), strconv.Itoa(portnum)))
 		if err == nil {
 			return conn, nil
@@ -85,3 +84,8 @@ func (d *Dialer) DialContext(ctx context.Context, network, addr string) (net.Con
 	}
 	return nil, fmt.Errorf("failed to dial any non-blocked addresses, last error was: %w", lastErr)
 }
+
+// BUG(artyom): Dialer.DialContext does not implement timeout spreading to each
+// dial attempt when trying multiple network addresses if host resolved to more
+// than one address. This package logic is less complex than
+// net.Dialer.DialContext.
